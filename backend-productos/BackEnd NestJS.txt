@@ -1,0 +1,160 @@
+Todos los comandos utilizados para crear el BackEnd con NestJS. 
+
+
+**** 1. nest new backend-productos
+**** 2. cd backend-productos
+**** 3. nest generate resource productos
+**** 4. npm install --save @nestjs/typeorm typeorm mysql 
+**** 5. src\productos\productos.module.ts
+
+import { Module } from '@nestjs/common';
+import { ProductosService } from './productos.service';
+import { ProductosController } from './productos.controller';
+import { Producto } from './entities/producto.entity';
+import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Producto])
+  ],
+
+  controllers: [ProductosController],
+  providers: [ProductosService],
+})
+export class ProductosModule { }
+
+**** 6. src\productos\entities\producto.entity.ts
+
+import { Column } from "typeorm/decorator/columns/Column";
+import { PrimaryGeneratedColumn } from "typeorm/decorator/columns/PrimaryGeneratedColumn";
+import { Entity } from "typeorm/decorator/entity/Entity";
+
+@Entity()
+export class Producto {
+    
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    nombre: string;
+
+    @Column()
+    categoria: string;
+
+    @Column()
+    precio: number;
+
+    @Column()
+    estado: string;
+
+}
+
+**** 7. src\productos\dto\create-producto.dto.ts
+
+export class CreateProductoDto {
+    id: number;
+    nombre: string;
+    categoria: string;
+    precio: number;
+    estado: string;
+}
+
+**** 8. src\app.module.ts
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { ProductosModule } from './productos/productos.module';
+import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
+
+@Module({
+  imports: [TypeOrmModule.forRoot({
+    type: 'mysql',
+    host: 'localhost',
+    port: 3306,
+    username: 'root',
+    password: '',
+    database: 'desarrollo',
+    retryDelay: 3000,
+    autoLoadEntities: true,
+    extra: { ssl: true },
+  }),
+    ProductosModule],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule { }
+
+
+**** 9. src\productos\productos.service.ts
+
+import { Injectable } from '@nestjs/common';
+import { CreateProductoDto } from './dto/create-producto.dto';
+import { UpdateProductoDto } from './dto/update-producto.dto';
+import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
+import { Producto } from './entities/producto.entity';
+import { Repository } from 'typeorm/repository/Repository';
+
+@Injectable()
+export class ProductosService {
+
+
+  constructor(
+    @InjectRepository(Producto)
+    private productRepository: Repository<Producto>,
+  ) { }
+
+  // Crea una instancia de Producto a partir del DTO (Data Transfer Object)
+  create(createProductoDto: CreateProductoDto) {
+    const nuevoProducto = this.productRepository.create(createProductoDto);
+    return this.productRepository.save(nuevoProducto);
+  }
+
+
+  async findAll() {
+    return await this.productRepository.find();
+  }
+
+  async findOne(id: number): Promise<Producto | undefined> {
+    return await this.productRepository.findOne({ where: { id } });
+  }
+
+  async update(id: number, updateProductoDto: UpdateProductoDto): Promise<Producto | undefined> {
+    const productExistente = await this.productRepository.findOne({ where: { id } });
+    if (!productExistente) return undefined; //Puedes manejar el caso en que la tarea no se encuentra
+
+
+    // Actualiza los campos de la tarea existente con los datos del DTO (Data Transfer Object)
+    productExistente.nombre = updateProductoDto.nombre;
+    productExistente.precio = updateProductoDto.precio;
+    productExistente.categoria = updateProductoDto.categoria;
+    productExistente.estado = updateProductoDto.estado;
+
+
+    return await this.productRepository.save(productExistente);
+  }
+
+  async remove(id: number) {
+    await this.productRepository.delete(id);
+  }
+}
+
+**** 10. Habilitar Cors. src\main.ts
+
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableCors();
+  await app.listen(3000);
+}
+bootstrap();
+
+
+**** 11. Ejecutar. 
+	npm run start:dev
+
+
+
+
+

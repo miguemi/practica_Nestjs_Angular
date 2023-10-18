@@ -1,0 +1,14 @@
+/* You can add global styles to this file, and also import other style files */
+
+body {
+    background: #93b400;
+    /* Fallback para navegadores antiguos */
+    background: -webkit-linear-gradient(to right, #ffa600, #FFD700);
+    /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #5c0277, #d9ff00);
+}
+
+.title {
+    font-size: 1.8rem;
+    font-family: 'Open Sans', sans-serif;
+}
